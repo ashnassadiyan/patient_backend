@@ -1,1 +1,14 @@
 readme file
+
+
+##create virtual env
+python3 -m venv venv
+
+##activate virtual env
+source venv/bin/activate
+
+##install requirements
+pip install -r requirements.txt
+
+## start the service
+uvicorn app:app --reload
