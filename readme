@@ -12,3 +12,6 @@ pip install -r requirements.txt
 
 ## start the service
 uvicorn app:app --reload
+
+## generate key
+openssl rand -hex 32
