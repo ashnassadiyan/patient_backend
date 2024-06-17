@@ -15,7 +15,7 @@ class Patient(BaseModel):
 
 class New_Patient(BaseModel):
     otp: int
-    email: str
+    patient_id: str
 
 
 class Login_User(BaseModel):

@@ -1,17 +1,9 @@
 import datetime
 from datetime import datetime, timedelta
-
-from fastapi.security import OAuth2PasswordRequestForm
-
 from config.database_config import patient_collection
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
 from jose import JWTError, jwt
-from dotenv import load_dotenv
-import os
 from bson.objectid import ObjectId
-
-from config.hashing import verify_password
-from models.patient_models import Respond_Patient, Login_User, Token
 from routes.patient_route import OAuth2PasswordBearer
 from schemas.patients_schema import serializor
 

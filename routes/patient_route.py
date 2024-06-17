@@ -1,16 +1,17 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
 from config.database_config import patient_collection
 from schemas.patients_schema import list_serializor, serializor
-from models.patient_models import New_Patient, Respond_Patient, Login_User, Patient
+from models.patient_models import New_Patient, Respond_Patient, Login_User, Patient, Single_Patient
 from config.hashing import hashing_password, verify_password
 from commons.common import generate_random_4_digit_number
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from config.auth import get_current_user
+from config.auth import get_current_user, create_access_token
+from bson import ObjectId
 
 patient_route = APIRouter(prefix='/patient')
 
 
-@patient_route.post('/create_patient', tags=["users"], response_model=New_Patient)
+@patient_route.post('/create_patient', tags=["users"], status_code=status.HTTP_201_CREATED)
 def create_patient(new_patient: Patient):
     serialized = new_patient.dict()
     email_exist = patient_collection.find_one({"email": serialized['email']})
@@ -20,8 +21,15 @@ def create_patient(new_patient: Patient):
         serialized['password'] = hashing_password(serialized['password'])
         serialized['verify'] = False
         serialized['otp'] = generate_random_4_digit_number()
-        patient_collection.insert_one(serialized)
-        return serialized
+        saved_user = patient_collection.insert_one(serialized)
+        saved_user_id = saved_user.inserted_id
+        serialized['id'] = str(saved_user_id)
+        token = create_access_token(data={"id": str(saved_user_id)})
+        return {
+            "message": "success",
+            "token": token,
+            "patient": serializor(serialized)
+        }
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -42,18 +50,18 @@ async def get_patients(firstName="", lastName="", token: str = Depends(get_curre
     }
 
 
-@patient_route.post('/verify', tags=['patients'], response_model=Respond_Patient)
+@patient_route.post('/verify', tags=['patients'])
 def verify_user(verification: New_Patient, token: str = Depends(get_current_user)):
     try:
         serialized = verification.dict()
-        user_exit = serializor(patient_collection.find_one({'email': serialized['email']}))
-        if not user_exit:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        if not serialized['otp'] == user_exit['otp']:
+        email_exist = serializor(patient_collection.find_one({"_id": ObjectId(serialized['patient_id'])}))
+        print(email_exist,'email_exist')
+        if not serialized['otp'] == email_exist['otp']:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="otp does not match")
-        updated_user = serializor(
-            patient_collection.find_one_and_update({"email": serialized['email']}, {"$set": {"verify": True}}))
-        return updated_user
+        patient_collection.find_one_and_update({"_id": ObjectId(serialized['patient_id'])}, {"$set": {"verify": True}})
+        return {
+            "message": "verified",
+        }
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
