@@ -4,16 +4,16 @@ from routes.auth_route import auth_route
 from routes.doctors_route import doctors_route
 from routes.doctors_availability_route import availability_route
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 
 app = FastAPI()
-
-
+handler = Mangum(app)
 
 origins = [
     "http://localhost",
     "http://localhost:8000",
     "http://localhost:3000",  # Adjust as per your frontend server
-    "http://your-frontend-domain.com"  # Add your frontend domains here
+    "https://patient-frontend-six.vercel.app"  # Add your frontend domains here
 ]
 
 app.add_middleware(
@@ -30,4 +30,8 @@ app.include_router(doctors_route)
 app.include_router(availability_route)
 
 
-
+@app.get('/index')
+def index():
+    return {
+        "success": "server is working"
+    }
