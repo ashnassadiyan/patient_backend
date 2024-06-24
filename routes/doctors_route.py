@@ -63,7 +63,6 @@ def create_doctor(doctor_id: str, doctor: Doctor, token: str = Depends(get_curre
 
 @doctors_route.get('/get_doctor/{doctor_id}', status_code=status.HTTP_200_OK)
 def create_doctor(doctor_id: str, token: str = Depends(get_current_user)):
-    print(doctor_id, 'id')
     try:
         existing_doctor = serializor(doctor_collection.find_one({"_id": ObjectId(doctor_id)}))
         if not existing_doctor:
@@ -74,3 +73,5 @@ def create_doctor(doctor_id: str, token: str = Depends(get_current_user)):
         }
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
